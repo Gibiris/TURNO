@@ -81,12 +81,48 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
 .legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
 .legend .pc{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
 .legend .ct{color:var(--muted);font-size:12px;min-width:70px;text-align:right}
+
+.mcard svg{width:100%;height:auto;display:block}
+.mcard .ax{fill:var(--muted);font-size:11px}
+.mcard .vl{fill:var(--text);font-size:11px;font-weight:600}
+.mcard .gl{stroke:var(--line);stroke-width:1}
+.mcard .bar{fill:var(--bar)}
+.mcard .bar.mx{fill:var(--bar-top)}
+
+.engc .eng{display:grid;grid-template-columns:minmax(150px,240px) 1fr 52px;gap:10px;align-items:center;width:100%;padding:6px 8px;margin:4px 0;background:transparent;color:var(--text);border:1px solid transparent;border-radius:10px;text-align:left;cursor:pointer}
+.engc .eng:hover{background:var(--accent-soft)}
+.engc .eng.sel{border-color:var(--accent);background:var(--accent-soft)}
+.engc .eng .nm{display:flex;align-items:center;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.engc .eng .tr{height:14px;background:var(--line);border-radius:7px;overflow:hidden}
+.engc .eng .fl{height:100%;background:var(--bar);border-radius:7px}
+.engc .eng.sel .fl{background:var(--accent)}
+.engc .eng .n{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.engc .det{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.engc .dh{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-weight:600;font-size:16px}
+.engc .dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.engc .dk{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.engc .dk .t{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.engc .dk .big{font-size:28px;font-weight:700;line-height:1.2}
+.engc .dk .two{display:flex;gap:18px;margin:6px 0}
+.engc .dk .two b{font-size:22px;display:block}
+.engc .dk .two span{font-size:12px;color:var(--muted)}
+.engc .dk .ok b{color:var(--ok)}
+.engc .dk .pe b{color:var(--warn)}
+.engc .dk.wide{grid-column:1/-1}
+.engc .actw{max-height:320px;overflow:auto;margin-top:10px;border:1px solid var(--line);border-radius:10px}
+.engc .actw table{min-width:0}
+.engc .actw th{position:sticky;top:0;background:var(--card)}
+.engc .actw th.c,.engc .actw td.c{text-align:center}
+.led{display:inline-block;width:12px;height:12px;border-radius:50%;background:#e5484d;box-shadow:0 0 6px #e5484d99;vertical-align:middle}
+.led.on{background:#22c55e;box-shadow:0 0 6px #22c55e99}
+.engc .pgt{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.engc .pgf{height:100%;background:var(--ok)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Asignación de servicios por carga de actividades</h1>
-  <p class="sub">Pestañas CDMX (desde la fila 417) y Centro (desde la fila 119), repartido entre los 7 ingenieros del equipo. Le toca a quien tenga menos actividades.</p>
+  <p class="sub">CDMX desde la fila 405, Centro desde la 106 y las demás pestañas completas (solo cuentan los 7 ingenieros del equipo). Le toca a quien tenga menos actividades.</p>
 
   <div class="card">
     <div id="live" class="hidden" style="margin-bottom:14px">
@@ -115,6 +151,11 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
       <label style="flex-direction:row;align-items:center;gap:6px"><input id="onlyRange" type="checkbox"> Solo filas del rango de asignación</label>
     </div>
     <div class="hint">No distingue mayúsculas ni acentos y busca coincidencias parciales (varias palabras: deben estar todas). Si llenas los dos campos, la fila debe cumplir ambos.</div>
+    <div id="lockBox" class="row" style="margin-top:10px;align-items:flex-end">
+      <label id="pwLbl">Contraseña para ver las columnas AG a AM<input id="pw" type="password" class="qs" autocomplete="off" placeholder="Contraseña"></label>
+      <button id="pwBtn" type="button">Desbloquear</button>
+      <span id="pwMsg" class="hint" style="margin:0"></span>
+    </div>
     <div id="resCount" class="hint"></div>
     <div id="results"></div>
   </div>
@@ -122,14 +163,20 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
   <div id="out" class="hidden">
     <div class="card next" id="next"></div>
     <div class="kpis" id="kpis"></div>
+    <div class="card engc" id="engCard">
+      <h3 style="margin:0 0 4px;font-size:15px">Actividades por ingeniero: MAQUETA y BOLETA</h3>
+      <div class="hint" style="margin:0 0 8px">Haz clic en un ingeniero para ver su detalle.</div>
+      <div id="engList"></div>
+      <div id="engDet"></div>
+    </div>
+    <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Distribución de actividades por ingeniero (%)</h3>
+      <div class="pieWrap"><div id="pie"></div><div id="legend" class="legend"></div></div>
+    </div>
     <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Orden de las próximas asignaciones</h3>
       <ol id="queue" style="margin:0;padding-left:22px"></ol>
       <div class="hint">Simula asignar un servicio a cada ingeniero disponible en orden, siempre al de menor carga. El primero es a quien le toca ahora.</div>
     </div>
     <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Actividades por ingeniero</h3><div class="bars" id="bars"></div></div>
-    <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Distribución de actividades por ingeniero (%)</h3>
-      <div class="pieWrap"><div id="pie"></div><div id="legend" class="legend"></div></div>
-    </div>
     <div class="card">
       <h3 style="margin:0 0 8px;font-size:15px">Detalle y disponibilidad</h3>
       <div class="tablewrap"><table>
@@ -138,13 +185,26 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
       </table></div>
       <div class="hint">“Carga” es lo que se usa para decidir (filas con nombre, o solo con OT si activas la casilla). Desmarca “Disponible” para excluir a alguien. En empate se sugiere el primero en orden alfabético.</div>
     </div>
+    <div class="card mcard" id="monthCard">
+      <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h3 style="margin:0;font-size:15px">OTS TOTALES</h3>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input id="uniqOT" type="checkbox"> Solo filas del rango de asignación</label>
+      </div>
+      <div id="monthChart"></div>
+      <div id="monthHint" class="hint"></div>
+    </div>
   </div>
 </div>
 
 <script>
 (function(){
   /* ===== Configuración ===== */
-  var SOURCES=[{sheet:'CDMX',start:417},{sheet:'Centro',start:119}]; // pestaña y fila inicial
+  var SOURCES=[                    // pestaña y fila inicial; soloEquipo = se cuentan únicamente los 7 ingenieros
+    {sheet:'CDMX',start:405},{sheet:'Centro',start:106},
+    {sheet:'Bajío',start:2,soloEquipo:true},{sheet:'Golfo',start:2,soloEquipo:true},{sheet:'Norte',start:2,soloEquipo:true},
+    {sheet:'Occidente',start:2,soloEquipo:true},{sheet:'Pacifico',start:2,soloEquipo:true},{sheet:'Peninsula',start:2,soloEquipo:true},
+    {sheet:'Sureste',start:2,soloEquipo:true},{sheet:'Tco',start:2,soloEquipo:true}
+  ];
   var NAME_COL=0, CARRIER_COL=2, OT_COL=3;   // A = ingeniero, C = carrier, D = OT
   var MAXROWS=5000;               // filas máximas que se leen por pestaña
   var DATA_URL='';                // para la lectura automática (ej. 'datos.json'); vacío = solo carga manual
@@ -159,7 +219,7 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
   function ingest(book){
     data=[]; store=[]; heads={}; var info=[];
     SOURCES.forEach(function(s){
-      var nm=book.SheetNames.filter(function(n){return n.trim().toLowerCase()===s.sheet.toLowerCase()})[0];
+      var nm=book.SheetNames.filter(function(n){return key(n)===key(s.sheet)})[0];
       if(!nm){ info.push('No encontré la pestaña “'+s.sheet+'”'); return; }
       var ws=book.Sheets[nm]; if(!ws||!ws['!ref']){ info.push(s.sheet+': vacía'); return; }
       var r0=XLSX.utils.decode_range(ws['!ref']).s.r;
@@ -170,9 +230,10 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
           store.push({sheet:s.sheet.toUpperCase(),n:r0+i+1,v:r,inR:r0+i+1>=s.start});
         if(r0+i+1<s.start) return;
         var n=norm(r[NAME_COL]); if(!n) return;
+        if(s.soloEquipo&&!rosterFor(n)) return;
         data.push({name:n,plaza:s.sheet.toUpperCase(),carrier:norm(r[CARRIER_COL]).toUpperCase(),ot:norm(r[OT_COL])!==''}); c++;
       });
-      info.push(s.sheet.toUpperCase()+': '+c+' filas con nombre desde la fila '+s.start);
+      info.push(s.sheet.toUpperCase()+': '+c+(s.soloEquipo?' filas del equipo':' filas con nombre desde la fila '+s.start));
     });
     $('msg').textContent=info.join(' · ');
     $('opts').classList.remove('hidden');
@@ -187,8 +248,8 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
     {name:'Flores Lobaton Magaly',             alias:['magaly']},
     {name:'Jaime Iriarte Cristian Javier',     alias:['cristian javier']},
     {name:'Jardon Zariñana Carlos Alfredo',    alias:['carlos alfredo']},
-    {name:'Perez Martinez Diana Laura',        alias:['diana laura','diana']},
-    {name:'Rios Ayala Victor Fabian',          alias:['victor fabian','victor']},
+    {name:'Perez Martinez Diana Laura',        alias:['diana laura']},
+    {name:'Rios Ayala Victor Fabian',          alias:['victor fabian']},
     {name:'Alvarez Vargas Alan Jair',          alias:['alan jair']}
   ];
   function key(v){return norm(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
@@ -262,6 +323,106 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
     });
   }
 
+  /* ===== Gráfica OTS TOTALES: filas con columna A llena por pestaña ===== */
+  var TABS=['Bajío','CDMX','Centro','Golfo','Norte','Occidente','Pacifico','Peninsula','Sureste','Tco'];
+  function drawMonths(){
+    var card=$('monthCard'), box=$('monthChart'), hint=$('monthHint');
+    if(!store.length){ card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    var onlyR=$('uniqOT').checked, cnt=TABS.map(function(){return 0});
+    store.forEach(function(r){
+      if(onlyR&&!r.inR) return;
+      if(norm(r.v[NAME_COL])==='') return;
+      for(var i=0;i<TABS.length;i++) if(key(TABS[i])===key(r.sheet)){ cnt[i]++; break; }
+    });
+    var n=TABS.length, total=cnt.reduce(function(a,b){return a+b},0), mx=Math.max.apply(null,cnt);
+    box.innerHTML='';
+    if(!total){ box.textContent='Sin filas con la columna A llena.'; hint.textContent=''; return; }
+    var NS='http://www.w3.org/2000/svg', W=760,H=300,L=44,R=12,T=22,B=40, pw=W-L-R, ph=H-T-B;
+    var step=mx<=5?1:(mx<=10?2:(mx<=25?5:(mx<=50?10:(mx<=100?20:(mx<=250?50:(mx<=500?100:200)))))), top=Math.ceil(mx/step)*step||step;
+    var svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('role','img'); svg.setAttribute('aria-label','Gráfica de barras con el total de filas con la columna A llena por pestaña');
+    function el(nm,a,t){ var e=document.createElementNS(NS,nm); for(var k in a) e.setAttribute(k,a[k]); if(t!=null) e.textContent=t; svg.appendChild(e); return e; }
+    for(var g=0;g<=top;g+=step){
+      var y=T+ph-(g/top)*ph;
+      el('line',{x1:L,x2:W-R,y1:y,y2:y,'class':'gl'});
+      el('text',{x:L-6,y:y+4,'text-anchor':'end','class':'ax'},g);
+    }
+    var slot=pw/n, bw=slot*0.62;
+    cnt.forEach(function(c,i){
+      var h=(c/top)*ph, x=L+i*slot+(slot-bw)/2, y=T+ph-h;
+      var b=el('rect',{x:x.toFixed(1),y:y.toFixed(1),width:bw.toFixed(1),height:Math.max(h,0).toFixed(1),rx:3,'class':'bar'+(c===mx&&c>0?' mx':'')});
+      var tt=document.createElementNS(NS,'title'); tt.textContent=TABS[i]+': '+c+(c===1?' fila':' filas'); b.appendChild(tt);
+      if(c>0) el('text',{x:(x+bw/2).toFixed(1),y:(y-5).toFixed(1),'text-anchor':'middle','class':'vl'},c);
+      el('text',{x:(x+bw/2).toFixed(1),y:H-B+16,'text-anchor':'middle','class':'ax'},TABS[i]);
+    });
+    el('line',{x1:L,x2:W-R,y1:T+ph,y2:T+ph,stroke:'var(--muted)','stroke-width':1});
+    box.appendChild(svg);
+    hint.textContent='Total: '+total+' filas con la columna A llena'+(onlyR?' (solo desde la fila inicial de asignación de cada pestaña)':' (toda la pestaña)')+'.';
+  }
+
+  /* ===== Gráfica por ingeniero: apariciones, OT, MAQUETA (P) y BOLETA (T) ===== */
+  var MAQ_COL=15, BOL_COL=19, selEng=null;      // P = 15, T = 19
+  function isDate(v){
+    var t=norm(v); if(!t) return false;
+    if(/^\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}$/.test(t)) return true;   // 15/05/2026, 05-15-26
+    if(/^\d{4}-\d{1,2}-\d{1,2}/.test(t)) return true;                  // 2026-05-15
+    if(/^\d{5}$/.test(t)&&+t>=30000&&+t<=80000) return true;             // fecha guardada como número de Excel
+    return false;
+  }
+  function drawEng(){
+    var card=$('engCard'), lst=$('engList'), det=$('engDet');
+    if(!store.length){ card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    var st=ROSTER.map(function(r,i){return {name:r.name,ci:i,rows:0,ot:0,mq:0,bo:0,acts:[]}});
+    store.forEach(function(r){
+      if(!r.inR) return;
+      var e=rosterFor(r.v[NAME_COL]); if(!e) return;
+      var x=st[e.ci]; x.rows++;
+      if(norm(r.v[OT_COL])!==''){ var hm=isDate(r.v[MAQ_COL]), hb=isDate(r.v[BOL_COL]); x.ot++; if(hm) x.mq++; if(hb) x.bo++; var rg=TABS.filter(function(t){return key(t)===key(r.sheet)})[0]||r.sheet; x.acts.push({reg:rg,pla:norm(r.v[1]),car:norm(r.v[CARRIER_COL]),cli:norm(r.v[7]),ot:norm(r.v[OT_COL]),mq:hm,bo:hb}); }
+    });
+    st.sort(function(a,b){return b.rows-a.rows||a.name.localeCompare(b.name,'es')});
+    var mx=Math.max.apply(null,st.map(function(x){return x.rows}))||1;
+    lst.innerHTML='';
+    st.forEach(function(x){
+      var b=document.createElement('button'); b.type='button'; b.className='eng'+(selEng===x.ci?' sel':'');
+      b.innerHTML='<span class="nm"></span><span class="tr"><span class="fl" style="display:block"></span></span><span class="n"></span>';
+      b.children[0].appendChild(avatar(x,26)); b.children[0].appendChild(document.createTextNode(x.name)); b.children[0].title=x.name;
+      b.querySelector('.fl').style.width=(x.rows/mx*100)+'%'; b.children[2].textContent=x.rows;
+      b.addEventListener('click',function(){ selEng=(selEng===x.ci?null:x.ci); drawEng(); });
+      lst.appendChild(b);
+    });
+    det.innerHTML='';
+    var sel=st.filter(function(x){return x.ci===selEng})[0];
+    if(!sel) return;
+    function blk(title,done){
+      var pend=sel.ot-done, pct=sel.ot?Math.round(done/sel.ot*100):0;
+      return '<div class="dk"><div class="t">'+title+'</div><div class="two"><div class="ok"><b>'+done+'</b><span>Con fecha</span></div><div class="pe"><b>'+pend+'</b><span>Pendientes</span></div></div>'+
+             '<div class="pgt"><div class="pgf" style="width:'+pct+'%"></div></div><div class="hint" style="margin-top:4px">'+pct+'% con fecha</div></div>';
+    }
+    var d=document.createElement('div'); d.className='det';
+    d.innerHTML='<div class="dh"></div><div class="dg"><div class="dk wide"><div class="t">Total de actividades</div><div class="big">'+sel.ot+'</div><div id="actTbl"></div></div>'+
+      blk('MAQUETA',sel.mq)+blk('BOLETA',sel.bo)+'</div>'+
+      '<div class="hint">Pendiente = la celda está vacía o no trae una fecha. '+(sel.rows-sel.ot?(sel.rows-sel.ot)+' de sus '+sel.rows+' filas no tienen OT y no entran en el total.':'')+'</div>';
+    d.querySelector('.dh').appendChild(avatar(sel,40)); d.querySelector('.dh').appendChild(document.createTextNode(sel.name));
+    det.appendChild(d);
+    var tw=d.querySelector('#actTbl');
+    if(sel.acts.length){
+      var wrap=document.createElement('div'); wrap.className='actw';
+      var tb=document.createElement('table'), th=document.createElement('thead'), hr=document.createElement('tr');
+      [['REGIÓN',''],['PLAZA',''],['CARRIER',''],['CLIENTE',''],['OT',''],['MAQUETA','c'],['BOLETA','c']].forEach(function(h){ var c=document.createElement('th'); c.textContent=h[0]; if(h[1]) c.className=h[1]; hr.appendChild(c); });
+      th.appendChild(hr); tb.appendChild(th);
+      var bd=document.createElement('tbody');
+      function ledCell(tr,on,lbl){ var c=document.createElement('td'); c.className='c'; var l=document.createElement('span'); l.className='led'+(on?' on':''); l.title=lbl+(on?': con fecha':': pendiente'); l.setAttribute('role','img'); l.setAttribute('aria-label',l.title); c.appendChild(l); tr.appendChild(c); }
+      sel.acts.forEach(function(a){
+        var tr=document.createElement('tr');
+        [a.reg,a.pla,a.car,a.cli,a.ot].forEach(function(t){ var c=document.createElement('td'); c.textContent=t||'—'; tr.appendChild(c); });
+        ledCell(tr,a.mq,'MAQUETA'); ledCell(tr,a.bo,'BOLETA'); bd.appendChild(tr);
+      });
+      tb.appendChild(bd); wrap.appendChild(tb); tw.appendChild(wrap);
+    }
+  }
+
   function render(){
     var list=compute();
     var ig=Object.keys(ignored).map(function(k){return k+' ×'+ignored[k]}).join(', ');
@@ -303,7 +464,7 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
       d.children[2].textContent=x.m; bars.appendChild(d);
     });
 
-    drawPie(list,total);
+    drawPie(list,total); drawMonths(); drawEng();
     var tb=$('tbody'); tb.innerHTML='';
     list.forEach(function(x){
       var tr=document.createElement('tr'), diff=x.m-avg, isPick=pick&&x.name===pick.name;
@@ -320,7 +481,8 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
 
   function readBuf(buf){
     try{
-      var names=SOURCES.map(function(s){return s.sheet});
+      var all=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames, names=[];
+      SOURCES.forEach(function(s){ var m=all.filter(function(n){return key(n)===key(s.sheet)})[0]; if(m) names.push(m); });
       ingest(XLSX.read(buf,{type:'array',sheets:names,sheetRows:MAXROWS}));
     }catch(err){ alert('No se pudo leer el archivo: '+err.message); }
   }
@@ -332,6 +494,7 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
   ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
   drop.addEventListener('drop',function(e){ if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
   $('onlyOT').addEventListener('change',render);
+  $('uniqOT').addEventListener('change',drawMonths);
 
   /* ===== Buscadores ===== */
   var CLI_COL=7; // H = cliente
@@ -366,6 +529,31 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
     });
     if(pos<chars.length) el.appendChild(document.createTextNode(chars.slice(pos).join('')));
   }
+  /* ===== Columnas AG a AM protegidas con contraseña ===== */
+  var LOCK_FROM=32, LOCK_TO=38;            // AG = 32 ... AM = 38 (índice base 0)
+  var PW_HASH='3ddc2d91a1992092889d1784f3b00bb19603fff0363cd995b124cd264b14d5a9';                        // SHA-256 de la contraseña (no va en texto plano)
+  var unlocked=false;
+  async function sha256(t){
+    var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+    return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('');
+  }
+  function syncLock(){
+    $('pwLbl').classList.toggle('hidden',unlocked);
+    $('pwBtn').textContent=unlocked?'Ocultar de nuevo':'Desbloquear';
+    $('pwMsg').textContent=unlocked?'Columnas AG a AM visibles.':'';
+    $('pwMsg').style.color='';
+  }
+  $('pwBtn').addEventListener('click',async function(){
+    if(unlocked){ unlocked=false; $('pw').value=''; syncLock(); runSearch(); return; }
+    try{
+      if(!(window.crypto&&crypto.subtle)) throw new Error('sin soporte');
+      if(await sha256($('pw').value)===PW_HASH){ unlocked=true; $('pw').value=''; syncLock(); runSearch(); }
+      else{ $('pwMsg').textContent='Contraseña incorrecta.'; $('pwMsg').style.color='var(--warn)'; }
+    }catch(e){ $('pwMsg').textContent='No se pudo validar la contraseña en este navegador.'; $('pwMsg').style.color='var(--warn)'; }
+  });
+  $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); $('pwBtn').click(); } });
+  syncLock();
+
   function runSearch(){
     var box=$('results'), cnt=$('resCount'); box.innerHTML=''; cnt.textContent='';
     var qo=tokens($('qOT').value), qc=tokens($('qCli').value);
@@ -382,8 +570,10 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
       else if(norm(h.v[NAME_COL])){ var en2=document.createElement('strong'); en2.textContent=norm(h.v[NAME_COL]); rh.appendChild(en2); }
       card.appendChild(rh);
       var g=document.createElement('div'); g.className='rg';
+      var hiddenN=0;
       h.v.forEach(function(val,j){
         if(val==null||String(val).trim()==='') return;
+        if(!unlocked&&j>=LOCK_FROM&&j<=LOCK_TO){ hiddenN++; return; }
         var c=document.createElement('div'), k=document.createElement('span'), v=document.createElement('span');
         k.className='k'; v.className='v';
         var hd=(heads[h.sheet]&&heads[h.sheet][j])?norm(heads[h.sheet][j]):'';
@@ -392,6 +582,7 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
         fillHL(v,txt,j===OT_COL?qo:(j===CLI_COL?qc:null));
         c.appendChild(k); c.appendChild(v); g.appendChild(c);
       });
+      if(hiddenN){ var lk=document.createElement('div'); lk.className='hint'; lk.style.gridColumn='1/-1'; lk.textContent='🔒 Columnas AG a AM ocultas ('+hiddenN+' con datos). Ingresa la contraseña para verlas.'; g.appendChild(lk); }
       card.appendChild(g); box.appendChild(card);
     });
   }
@@ -426,6 +617,7 @@ mark{background:#fde68a;color:#1a1a1a;border-radius:3px;padding:0 2px}
   $('demo').addEventListener('click',function(){
     var plan={CDMX:{Magaly:6,'Carlos Enedino':3,'Cristian Javier':1,'Alan Jair':1},Centro:{'Carlos Alfredo':1}}, b=XLSX.utils.book_new();
     SOURCES.forEach(function(s){
+      if(!plan[s.sheet]) return;
       var aoa=[['ING','PLAZA','CARRIER','OT','CRUZADO','ACOMETIDO','MODELO EQUIPO','CLIENTE']]; while(aoa.length<s.start-1) aoa.push([null,null,null,null]);
       var k=1; Object.keys(plan[s.sheet]).forEach(function(n){for(var i=0;i<plan[s.sheet][n];i++) aoa.push([n,s.sheet,'MCM','OT-'+(400000+k),'No','No','X435-8T-4S','Cliente de ejemplo '+k]); k++});
       XLSX.utils.book_append_sheet(b,XLSX.utils.aoa_to_sheet(aoa),s.sheet);
